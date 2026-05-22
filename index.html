@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健保支付點數查詢 — 胸腔科・重症・高壓氧 v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6fa;
+  --bg2: #eef1f7;
+  --card: #ffffff;
+  --blue: #2563eb;
+  --blue-light: #dbeafe;
+  --blue-mid: #93c5fd;
+  --text: #1a2340;
+  --sub: #5a6a8a;
+  --border: #d1d9eb;
+  --green: #059669;
+  --green-light: #d1fae5;
+  --yellow: #d97706;
+  --yellow-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+  --teal: #0891b2;
+  --teal-light: #cffafe;
+  --orange: #ea580c;
+  --orange-light: #ffedd5;
+  --pink: #db2777;
+  --pink-light: #fce7f3;
+  --sidebar-w: 200px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Header */
+.app-header {
+  background: var(--blue);
+  color: #fff;
+  padding: 12px 20px;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(37,99,235,.25);
+}
+.app-header h1 { font-size: 16px; font-weight: 700; flex: 1; }
+.app-header .version { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: .75; background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 4px; }
+
+/* Search bar */
+.search-bar-wrap {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; gap: 8px; align-items: center;
+}
+.search-input {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 8px 14px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+  outline: none; transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--blue); }
+.search-clear { background: none; border: none; cursor: pointer; color: var(--sub); font-size: 18px; padding: 4px 8px; border-radius: 6px; }
+.search-clear:hover { background: var(--bg2); }
+.search-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--sub); white-space: nowrap; }
+
+/* Layout */
+.main-layout { display: flex; min-height: calc(100vh - 100px); }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  position: sticky; top: 100px;
+  height: calc(100vh - 100px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sidebar-section { padding: 10px 0 4px; }
+.sidebar-section-label { font-size: 10px; font-weight: 700; color: var(--sub); letter-spacing: .08em; padding: 0 14px 4px; text-transform: uppercase; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; cursor: pointer;
+  font-size: 13px; color: var(--text);
+  border-left: 3px solid transparent;
+  transition: all .15s; user-select: none;
+}
+.sidebar-item:hover { background: var(--bg2); }
+.sidebar-item.active { background: var(--blue-light); border-left-color: var(--blue); color: var(--blue); font-weight: 700; }
+.sidebar-item .cat-icon { width: 20px; text-align: center; font-size: 14px; flex-shrink: 0; }
+.sidebar-item .cat-count { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--sub); background: var(--bg2); padding: 1px 5px; border-radius: 4px; }
+.sidebar-item.active .cat-count { background: rgba(37,99,235,.12); color: var(--blue); }
+.sidebar-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+
+/* Content */
+.content { flex: 1; padding: 16px; overflow: auto; }
+.content-title {
+  font-size: 17px; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.content-title .cat-badge {
+  font-size: 12px; font-weight: 500; padding: 2px 10px;
+  border-radius: 20px; background: var(--blue-light); color: var(--blue);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Cards */
+.cards-grid { display: flex; flex-direction: column; gap: 10px; }
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  transition: box-shadow .15s;
+}
+.card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+.card-header {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px 10px;
+  cursor: pointer;
+}
+.card-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 600;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 3px 8px; border-radius: 6px;
+  white-space: nowrap; flex-shrink: 0;
+  letter-spacing: .03em;
+}
+.card-main { flex: 1; min-width: 0; }
+.card-name-zh { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.card-name-en { font-size: 11px; color: var(--sub); margin-top: 2px; font-style: italic; }
+.card-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.points-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px; font-weight: 700;
+  color: var(--green);
+  background: var(--green-light);
+  padding: 2px 10px; border-radius: 6px;
+}
+.date-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--sub);
+  background: var(--bg2); padding: 2px 7px; border-radius: 4px;
+}
+.copy-btn {
+  margin-left: auto; flex-shrink: 0;
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: 11px; cursor: pointer; color: var(--sub);
+  font-family: 'IBM Plex Mono', monospace;
+  transition: all .15s;
+}
+.copy-btn:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+.copy-btn.copied { background: var(--green-light); color: var(--green); border-color: var(--green); }
+.expand-icon { margin-left: 8px; color: var(--sub); font-size: 12px; flex-shrink: 0; transition: transform .2s; }
+.card.expanded .expand-icon { transform: rotate(180deg); }
+
+.card-note {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #3a4a6a;
+  display: none;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.card.expanded .card-note { display: block; }
+.no-note { font-style: italic; color: var(--sub); }
+
+/* Category colors */
+.cat-肺功能檢查 .card-code { background: var(--teal-light); color: var(--teal); }
+.cat-呼吸治療呼吸器 .card-code { background: var(--blue-light); color: var(--blue); }
+.cat-HFNC高流量 .card-code { background: var(--purple-light); color: var(--purple); }
+.cat-重症ICU .card-code { background: var(--red-light); color: var(--red); }
+.cat-呼吸照護病房 .card-code { background: var(--orange-light); color: var(--orange); }
+.cat-支氣管鏡EBUS .card-code { background: var(--yellow-light); color: var(--yellow); }
+.cat-侵入性處置 .card-code { background: var(--pink-light); color: var(--pink); }
+.cat-低溫治療TTM .card-code { background: var(--purple-light); color: var(--purple); }
+.cat-高壓氧 .card-code { background: #dcfce7; color: #16a34a; }
+.cat-CPR急救 .card-code { background: var(--red-light); color: var(--red); }
+.cat-俯臥通氣 .card-code { background: var(--teal-light); color: var(--teal); }
+.cat-呼吸道清潔 .card-code { background: var(--green-light); color: var(--green); }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--sub); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* Footer */
+.app-footer {
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  font-size: 11px;
+  color: var(--sub);
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+}
+.app-footer a { color: var(--blue); text-decoration: none; }
+.app-footer a:hover { text-decoration: underline; }
+
+/* Sort controls */
+.sort-controls {
+  display: flex; gap: 6px; margin-bottom: 12px; align-items: center;
+}
+.sort-label { font-size: 12px; color: var(--sub); }
+.sort-btn {
+  font-size: 12px; padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--card);
+  cursor: pointer; color: var(--text); font-family: 'Noto Sans TC', sans-serif;
+  transition: all .15s;
+}
+.sort-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Highlight */
+.highlight { background: #fef08a; border-radius: 2px; }
+
+/* Mobile */
+@media (max-width: 640px) {
+  :root { --sidebar-w: 160px; }
+  .app-header h1 { font-size: 13px; }
+  .content { padding: 10px; }
+  .card-name-zh { font-size: 13px; }
+  .sidebar-item { font-size: 12px; padding: 7px 10px; }
+}
+@media (max-width: 480px) {
+  .sidebar { width: 44px; }
+  .sidebar-item .cat-label { display: none; }
+  .sidebar-item .cat-count { display: none; }
+  .sidebar-section-label { display: none; }
+  .sidebar-divider { margin: 4px 6px; }
+  .sidebar-item { justify-content: center; padding: 10px 6px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>🫁</div>
+  <h1>健保支付點數查詢 — 胸腔科・重症・高壓氧</h1>
+  <span class="version">v1.0</span>
+</div>
+
+<div class="search-bar-wrap">
+  <input class="search-input" type="text" id="searchInput" placeholder="搜尋代碼、項目名稱、英文名稱..." autocomplete="off">
+  <button class="search-clear" id="clearBtn" title="清除">✕</button>
+  <span class="search-count" id="searchCount"></span>
+</div>
+
+<div class="main-layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="content">
+    <div class="sort-controls">
+      <span class="sort-label">排序：</span>
+      <button class="sort-btn active" id="sortDefault">預設</button>
+      <button class="sort-btn" id="sortHigh">點數 ↑</button>
+      <button class="sort-btn" id="sortLow">點數 ↓</button>
+    </div>
+    <div class="content-title" id="contentTitle"></div>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+</div>
+
+<div class="app-footer">
+  <span>📋 資料來源：</span>
+  <a href="https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=1381" target="_blank">全民健康保險醫療服務給付項目及支付標準（衛福部健保署）</a>
+  <span>｜</span>
+  <span>檔案：A21030000I-D20021-001</span>
+  <span>｜</span>
+  <span>版本：v1.0｜2025/05</span>
+  <span>｜</span>
+  <span>衛生福利部臺北醫院 胸腔內科</span>
+</div>
+
+<script>
+const CATS = [
+  { id: 'all',      label: '全部', icon: '🔍', cssClass: '' },
+  { id: '肺功能檢查',  label: '肺功能檢查', icon: '📊', cssClass: 'cat-肺功能檢查' },
+  { id: '呼吸治療/呼吸器', label: '呼吸治療/呼吸器', icon: '🌬', cssClass: 'cat-呼吸治療呼吸器' },
+  { id: 'HFNC 高流量', label: 'HFNC 高流量', icon: '💧', cssClass: 'cat-HFNC高流量' },
+  { id: '重症/ICU',   label: '重症/ICU', icon: '🏥', cssClass: 'cat-重症ICU' },
+  { id: '呼吸照護病房', label: '呼吸照護病房', icon: '🏨', cssClass: 'cat-呼吸照護病房' },
+  { id: '支氣管鏡/EBUS', label: '支氣管鏡/EBUS', icon: '🔬', cssClass: 'cat-支氣管鏡EBUS' },
+  { id: '侵入性處置',  label: '侵入性處置', icon: '🩺', cssClass: 'cat-侵入性處置' },
+  { id: '低溫治療/TTM', label: '低溫治療/TTM', icon: '🧊', cssClass: 'cat-低溫治療TTM' },
+  { id: '高壓氧',    label: '高壓氧', icon: '🤿', cssClass: 'cat-高壓氧' },
+  { id: 'CPR/急救',  label: 'CPR/急救', icon: '🫀', cssClass: 'cat-CPR急救' },
+  { id: '俯臥通氣',   label: '俯臥通氣', icon: '🔄', cssClass: 'cat-俯臥通氣' },
+  { id: '呼吸道清潔',  label: '呼吸道清潔', icon: '💨', cssClass: 'cat-呼吸道清潔' },
+];
+
+const RAW_DATA = [{"code":"17001C","points":"85","start":"20150201","end":"29101231","name_en":"Wrights peak flow meter-portable","name_zh":"萊特氏最高流量計—移動型","note":"註:內含一般材料費及單一使用拋棄式之過濾器","category":"肺功能檢查"},{"code":"17002B","points":"85","start":"20150201","end":"29101231","name_en":"Pi max and Pe max","name_zh":"最大吸氣壓及最大吐氣壓","note":"1.限呼吸器 weaning時申報。2.內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17003C","points":"305","start":"20150201","end":"29101231","name_en":"Flow-volume curve","name_zh":"流量容積圖形檢查","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17004C","points":"485","start":"20170501","end":"29101231","name_en":"Lung volume with functional residual capacity","name_zh":"標準肺量測定 (包括FRC測定)","note":"1.包含流速－容積測定 (flow-volume test)、肺通氣試驗(Ventilation test)、肺餘量試驗(residual volume test)2.內含一般材料費及單一使用拋棄式之過濾器。3.除山地離島地區外，基層院所限由專任醫師開立處方始可申報。","category":"肺功能檢查"},{"code":"17005B","points":"275","start":"20150201","end":"29101231","name_en":"Single breath nitrogen washout test","name_zh":"單次呼吸肺氮廓清試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17006C","points":"485","start":"20230701","end":"29101231","name_en":"Bronchodilator test","name_zh":"支氣管擴張劑試驗","note":"1.內含一般材料費及單一使用拋棄式之過濾器。2.除山地離島地區外，基層院所限由專任醫師開立處方始可申報。3.不得同時申報：17019C。","category":"肺功能檢查"},{"code":"17007B","points":"835","start":"20211101","end":"29101231","name_en":"Standard bronchodilator test","name_zh":"標準支氣管擴張劑試驗","note":"1.內含一般材料費及單一使用拋棄式之過濾器。2.不得同時申報17020B。","category":"肺功能檢查"},{"code":"17009B","points":"355","start":"20150201","end":"29101231","name_en":"CO diffusing capacity","name_zh":"一氧化碳肺瀰散量測定","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17010B","points":"275","start":"20150201","end":"29101231","name_en":"Pressure volume curve","name_zh":"壓力容積圖形試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17011B","points":"275","start":"20150201","end":"29101231","name_en":"Pressure flow curve","name_zh":"壓力流量圖形試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17012B","points":"485","start":"20150201","end":"29101231","name_en":"Pressure volume curve and pressure flow curve","name_zh":"壓力容積圖形及壓力流量圖形試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17013B","points":"275","start":"20150201","end":"29101231","name_en":"CO2 stimulation test and mouth occlusion pressure","name_zh":"二氧化碳刺激試驗及閉口壓","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17014B","points":"305","start":"20150201","end":"29101231","name_en":"Closing volume","name_zh":"閉鎖容積試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17015B","points":"445","start":"20150201","end":"29101231","name_en":"Hypoxic stimulation test","name_zh":"缺氧刺激試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17016B","points":"1535","start":"20150201","end":"29101231","name_en":"Exercise pulmonary function test (stress test)","name_zh":"運動肺功能試驗","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17017B","points":"90","start":"20150201","end":"29101231","name_en":"Haloscale respiration","name_zh":"全階呼吸量測定","note":"1.限呼吸器 weaning時申報。2.內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17018B","points":"305","start":"20150201","end":"29101231","name_en":"Basal metabolic rate","name_zh":"基礎代謝率","note":"註：內含一般材料費及單一使用拋棄式之過濾器。","category":"肺功能檢查"},{"code":"17019C","points":"909","start":"20230701","end":"29101231","name_en":"Bronchial provocation test","name_zh":"支氣管激發試驗","note":"1.內含一般材料費及單一使用拋棄式之過濾器。2.不得同時申報：17006C。","category":"肺功能檢查"},{"code":"17020B","points":"335","start":"20211101","end":"29101231","name_en":"Mutiple breath nitrogen washout test","name_zh":"多次呼吸肺氮廓清試驗","note":"1.內含一般材料費及單一使用拋棄式之過濾器。2.不得同時申報17007B。","category":"肺功能檢查"},{"code":"17022B","points":"748","start":"20250501","end":"29101231","name_en":"","name_zh":"呼氣一氧化氮監測(FeNO)","note":"1.適應症：(1)六歲以上至未滿十三歲確診氣喘病人追蹤使用。(2)十三歲以上確診重度氣喘病人追蹤使用。(3)重度定義：氣喘病人過去一年即使接受高劑量吸入型類固醇及長效型乙型交感神經致效劑(ICS/LABA)組合治療，或相同期間需要口服型類固醇(OCS)治療半年以上，依然控制不佳（poorly controlled），且符合下列任一項者：A.症狀控制不佳：氣喘控制問卷(ACQ)＞1.5，氣喘控制檢驗(ACT)＜20（或根據美國國家氣喘衛教及防治協會NAEPP/GINA指引分類為"not well controlled")。B.經常性嚴重急性發作：過去一年有二次以上之急性發作需要使用全身性類固醇治療三天以上。C.危及生命之急性發作：過去一年至少一次住院、住加護病房或人工呼吸器支持。2.支付規範：(1)申報次數：一年最多申報三次。(2)申報專科別：兒科、內科、家醫科、耳鼻喉科。(3)執行限制：限受過操作訓練之醫療人員。(4)費用申報時必要之附件：檢測報告。","category":"肺功能檢查"},{"code":"17023B","points":"900","start":"20180601","end":"29101231","name_en":"Six-minute Walk Test","name_zh":"六分鐘步行測試","note":"註：1.適應症：(1)原發性肺性高血壓(Primary pulmonary hypertension)。(2)先天性心臟病合併肺高壓。(3)其他申請肺動脈高血壓用藥申請事前審查者。2.適用層級：申請肺高壓用藥之醫院門、住診均可使用。3.支付規範：(1)執行頻率：每年二次。(2)不得同時申報57017C。","category":"肺功能檢查"},{"code":"17024B","points":"3883","start":"20230701","end":"29101231","name_en":"Chest electrical impedance tomography","name_zh":"胸部電阻斷面造影","note":"1.適應症：入住加護病房，且為柏林定義中重度急性呼吸窘迫症候群病人（ICD-10-CM：J80）。2.限內科、外科、麻醉科、兒科、急診醫學科、神經科及神經外科專科醫師執行。3.須醫師及呼吸治療師在場共同操作，隨時提供必要之緊急措施。4.執行本項至少需有十六個以上胸帶電極數，且執行本項時間至少六十分鐘，並應於申報時填寫執行起迄時間。5.需檢附「胸部電阻斷面造影報告」備查。6.每次住院以申報一次為原則，至多申報二次，並應於病歷敘明重複執行之原因。","category":"肺功能檢查"},{"code":"57023B","points":"900","start":"20240401","end":"29101231","name_en":"Non-invasive positive pressure (day)(如Nasal PAP、CPAP、Bi-PAP)。","name_zh":"非侵襲性陽壓呼吸治療一天","note":"1.含氧氣吸入使用費、濕氣吸入治療費及器材使用費用。2.已內含Ambu bag 之使用及抽痰，不得另申報57009B(甦醒器使用/天)及47041C或47042C(呼吸道抽吸)之費用。3.不得同時申報57030B、57031B及57032B。","category":"呼吸治療/呼吸器"},{"code":"57024B","points":"205","start":"19961001","end":"29101231","name_en":"Aerosol therapy for ventilator(day)","name_zh":"人工呼吸器噴霧吸入治療一天","note":"","category":"呼吸治療/呼吸器"},{"code":"57032B","points":"3712","start":"20240401","end":"29101231","name_en":"Neurally adjusted ventilatory assist（NAVA）ventilation and Electrical activity of the diaphragm（Edi）monitoring／day","name_zh":"神經調控通氣輔助呼吸治療及橫膈膜電位訊號監測（一天）","note":"1.適應症：限用於患有支氣管肺發育不全的未滿兩歲嬰幼兒，且符合插管天數十四天以上，無法拔管之病人。2.支付規範：(1)限醫院緊急醫療能力分級評定基準評定結果，屬高危險妊娠及新生兒醫療中度級以上急救責任醫院申報。(2)限新生兒科、兒童胸腔暨重症科、兒童重症醫學科、兒童神經科專科醫師申報。(3)申報費用時應檢附下列呼吸治療項目之紀錄：呼吸器使用模式、Edi min、Edi peak、FiO2、PEEP，視需要加填NAVA level。(4)限住院案件申報。(5)不得同時申報57001B、57023B、57029C、57030B及57031B。","category":"呼吸治療/呼吸器"},{"code":"57030B","points":"6000","start":"20240401","end":"29101231","name_en":"Humidified high flow oxygen therapy - First time","name_zh":"濕化高流量氧氣治療 － 第一天照護費（含管路特材）","note":"1.限急診或住院病人符合下列適應症者使用：(1)成人(十九歲以上)A.急性缺氧性呼吸衰竭，且需同時符合下列各項條件：(a)當以10L/min或更高的流速供應氧氣至少十五分鐘，P/F ratio≦300時。(b)RR>25次/min，呼吸困難或呼吸窘迫。(c)PaCO₂≦45 mmHg。B.呼吸衰竭拔管後，預防再次插管使用，並有下列任一情形：(a)曾插管二十四小時以上之病人，且有下列任一高危險因子者：年紀六十五歲以上、APACHE II＞12分、BMI>30 Kg/㎡、呼吸道清除功能失效、困難脫離呼吸器病人或插管大於七天病人。(b)經臨床負責醫師判定有再度發生呼吸衰竭之可能。(2)兒童(未滿十九歲)A.缺氧性呼吸衰竭或呼吸窘迫。B.脫離侵襲性或非侵襲性呼吸器後，預防再次使用呼吸器時使用。2.限內科、外科、麻醉科、兒科、急診醫學科、神經科及神經外科專科醫師執行。3.不得同時申報57004C、57023B及57032B。4.更換管路當日比照第一天照護費申報。5.兒童(未滿十九歲)得依表定點數加計百分之二十。6.57030B內含一般材料費、高流量鼻導管及高流量管路組費比率為百分之六十五。","category":"HFNC 高流量"},{"code":"57031B","points":"1937","start":"20240401","end":"29101231","name_en":"Humidified high flow oxygen therapy - Daily care","name_zh":"濕化高流量氧氣治療 － 第二天後照護費（天）","note":"1.適應症同57030B。2.限內科、外科、麻醉科、兒科、急診醫學科、神經科及神經外科專科醫師執行。3.不得同時申報57004C、57023B及57032B。4.更換管路當日比照第一天照護費申報。5.兒童(未滿十九歲)得依表定點數加計百分之二十。","category":"HFNC 高流量"},{"code":"02011K","points":"1925","start":"20260401","end":"29101231","name_en":"","name_zh":"加護病床住院診察費(天)","note":"1.精神科加護病床、燒傷中心及骨髓移植隔離病床比照申報。2.兒科專科醫師得加計百分之一百二十，若同時符合兒童加成或兒科及新生兒科加護病房加成者，依加成率合計後一併加成，最高加成上限為百分之一百六十。","category":"重症/ICU"},{"code":"02012A","points":"1729","start":"20260401","end":"29101231","name_en":"","name_zh":"加護病床住院診察費(天)","note":"1.精神科加護病床、燒傷中心及骨髓移植隔離病床比照申報。2.兒科專科醫師得加計百分之一百二十。","category":"重症/ICU"},{"code":"02013B","points":"1536","start":"20260401","end":"29101231","name_en":"","name_zh":"加護病床住院診察費(天)","note":"1.精神科加護病床、燒傷中心及骨髓移植隔離病床比照申報。2.兒科專科醫師得加計百分之一百二十。","category":"重症/ICU"},{"code":"03010E","points":"2852","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）-病房費","note":"1.監視器、C.V.P.處理費等已包括在所訂點數內，不得另計。2.呼吸器、電擊、氧氣、C.V.P.置入及顱內壓監視置入等另按實際使用申報。3.適用對象：急性呼吸衰竭、呼吸窘迫、心肺衰竭、休克、敗血症、重大術後等危篤重症危及生命者。4.轉出條件：血動力學穩定、脫離呼吸器、不需加護醫療照護者。","category":"重症/ICU"},{"code":"03011F","points":"2406","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–病房費","note":"同03010E，適用不同醫院層級。","category":"重症/ICU"},{"code":"03012G","points":"2406","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–病房費","note":"同03010E，適用不同醫院層級。","category":"重症/ICU"},{"code":"03047E","points":"4716","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第二天起）","note":"1.監視器、C.V.P.處理費等已包括在所訂點數內，不得另計。2.呼吸器、電擊、氧氣、C.V.P.置入及顱內壓監視置入等另按實際使用申報。","category":"重症/ICU"},{"code":"03048F","points":"3978","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第二天起）","note":"同03047E，適用不同醫院層級。","category":"重症/ICU"},{"code":"03049G","points":"2975","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第二天起）","note":"同03047E，適用不同醫院層級。","category":"重症/ICU"},{"code":"03104E","points":"6131","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第一天）","note":"1.監視器、C.V.P.處理費等已包括在所訂點數內，不得另計。2.呼吸器、電擊、氧氣、C.V.P.置入及顱內壓監視置入等另按實際使用申報。","category":"重症/ICU"},{"code":"03105F","points":"5171","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第一天）","note":"同03104E，適用不同醫院層級。","category":"重症/ICU"},{"code":"03106G","points":"3868","start":"20240701","end":"29101231","name_en":"ICU","name_zh":"加護病床（床/天）–護理費（第一天）","note":"同03104E，適用不同醫院層級。","category":"重症/ICU"},{"code":"05151B","points":"360","start":"20191001","end":"29101231","name_en":"","name_zh":"加護病房營養照護費－初次照護費","note":"1.適應症：一歲以上且入住ICU超過二天之個案。2.申報次數：每案入住ICU最多申報六次，同日內限申報一次。七天內：限申報05151B一次、05152B最多二次。超過七天：限申報05152B最多三次。3.執行人員：經認證之營養師。4.申報時應有營養照護紀錄於病歷備查。","category":"重症/ICU"},{"code":"05152B","points":"240","start":"20191001","end":"29101231","name_en":"","name_zh":"加護病房營養照護費－追蹤照護費","note":"同05151B，追蹤照護費用。","category":"重症/ICU"},{"code":"P4619B","points":"5000","start":"20260101","end":"29101231","name_en":"","name_zh":"重症病人直接入住轉入醫院加護病房(不經轉入醫院之急診)獎勵（上轉）","note":"中度或一般級急救責任醫院及地區醫院，轉診至上一級急救責任醫院或區域以上醫院接受專業處理。","category":"重症/ICU"},{"code":"P4620B","points":"5000","start":"20260101","end":"29101231","name_en":"","name_zh":"重症病人直接入住轉入醫院加護病房(不經轉入醫院之急診)獎勵（平轉）","note":"適用平行轉診之疾病主診斷如附表一、附表二。※全民健康保險急診品質提升方案","category":"重症/ICU"},{"code":"03003BA","points":"404","start":"20210701","end":"29101231","name_en":"","name_zh":"慢性呼吸照護病房病床費/天","note":"","category":"呼吸照護病房"},{"code":"03012GA","points":"1638","start":"20210701","end":"29101231","name_en":"","name_zh":"醫學中心亞急性呼吸照護病房病床費/天","note":"","category":"呼吸照護病房"},{"code":"03013HA","points":"1218","start":"20210701","end":"29101231","name_en":"","name_zh":"區域醫院亞急性呼吸照護病房病床費/天","note":"","category":"呼吸照護病房"},{"code":"03028BA","points":"451","start":"20210701","end":"29101231","name_en":"","name_zh":"慢性呼吸照護病房護理費/天","note":"","category":"呼吸照護病房"},{"code":"03049GA","points":"2457","start":"20210701","end":"29101231","name_en":"","name_zh":"醫學中心亞急性呼吸照護病房護理費/天","note":"","category":"呼吸照護病房"},{"code":"03050HA","points":"1827","start":"20210701","end":"29101231","name_en":"","name_zh":"區域醫院亞急性呼吸照護病房護理費/天","note":"","category":"呼吸照護病房"},{"code":"P1005K","points":"10647","start":"20210701","end":"29101231","name_en":"","name_zh":"醫學中心亞急性呼吸照護病床（照護日數≦42日）論日計酬：第1－21天","note":"患者符合以下狀況得回轉ICU（每次以7日為原則）：血壓須升壓藥維持、腎衰竭、大量胃腸出血、嚴重感染未控制、FIO2≧40%且PEEP≧10cmH2O仍無法維持SpO2≧90%或PaO2≧60mmHg。病況不適合積極嘗試脫離呼吸器者，不應轉入亞急性呼吸照護病床。","category":"呼吸照護病房"},{"code":"P1006K","points":"7991","start":"20210701","end":"29101231","name_en":"","name_zh":"醫學中心亞急性呼吸照護病床（照護日數≦42日）論日計酬：第22－42天","note":"同P1005K條件，第22至42天費率。","category":"呼吸照護病房"},{"code":"P1007A","points":"9660","start":"20210701","end":"29101231","name_en":"","name_zh":"區域醫院亞急性呼吸照護病床（照護日數≦42日）論日計酬：第1－21天","note":"同P1005K條件，區域醫院適用。","category":"呼吸照護病房"},{"code":"P1008A","points":"7256","start":"20210701","end":"29101231","name_en":"","name_zh":"區域醫院亞急性呼吸照護病床（照護日數≦42日）論日計酬：第22－42天","note":"同P1007A條件，第22至42天費率。","category":"呼吸照護病房"},{"code":"P1011C","points":"4451","start":"20210701","end":"29101231","name_en":"","name_zh":"慢性呼吸照護病房論日計酬：第1－90日","note":"1.依病患入住慢性呼吸照護病房或一般病房之照護日數累計計算。2.依據全民健康保險醫療費用審查注意事項審查原則辦理。","category":"呼吸照護病房"},{"code":"P1012C","points":"3674","start":"20210701","end":"29101231","name_en":"","name_zh":"慢性呼吸照護病房論日計酬：第91天以後","note":"同P1011C，第91天後費率。","category":"呼吸照護病房"},{"code":"28006C","points":"2938","start":"20260401","end":"29101231","name_en":"Bronchoscopy","name_zh":"支氣管鏡檢查","note":"","category":"支氣管鏡/EBUS"},{"code":"28038B","points":"2437","start":"20210701","end":"29101231","name_en":"","name_zh":"自體螢光支氣管鏡檢查","note":"適應症：1.痰液細胞學檢查發現疑似惡性細胞且胸部影像學正常者。2.肺癌手術前確認病灶侵犯位置，以決定手術方式及切除範圍。3.肺癌手術後追蹤，當疑似切除位置有復發時，為確認病灶。","category":"支氣管鏡/EBUS"},{"code":"28039B","points":"5116","start":"20221201","end":"29101231","name_en":"Bronchofluoroscopy","name_zh":"支氣管鏡螢光透視檢查（含支氣管鏡檢查費用）","note":"1.適應症：支氣管鏡直接目視下不可見之肺周邊病灶，並經螢光導引定位進行之切片、刷拭、沖洗。2.不得與28006C支氣管鏡檢查合併申報。","category":"支氣管鏡/EBUS"},{"code":"28040B","points":"7365","start":"20160101","end":"29101231","name_en":"Bronchoscopic Ultrasonography; EBUS","name_zh":"支氣管內視鏡超音波","note":"1.不得同時申報28006C、28026B。2.需檢附胸腔電腦斷層報告。3.內含一般材料費及單一使用之拋棄式特殊材料。","category":"支氣管鏡/EBUS"},{"code":"28041B","points":"14198","start":"20160101","end":"29101231","name_en":"EBUS + Transbronchial node aspiration","name_zh":"支氣管內視鏡超音波導引縱膈淋巴節定位切片術","note":"1.不得同時申報28006C、28009B、28026B及28040B。2.申報時須檢附當次病理報告。3.內含一般材料費及單一使用之拋棄式特殊材料。","category":"支氣管鏡/EBUS"},{"code":"28042B","points":"13476","start":"20221201","end":"29101231","name_en":"EBUS + Peripheral lung transbronchial biopsy","name_zh":"支氣管內視鏡超音波導引周邊肺組織採檢切片術","note":"1.不得同時申報28006C、33103B及28040B。2.申報時須檢附當次病理報告。3.內含一般材料費及單一使用之拋棄式特殊材料。","category":"支氣管鏡/EBUS"},{"code":"56038B","points":"3838","start":"20210701","end":"29101231","name_en":"Endoscopic Cryotherapy","name_zh":"內視鏡冷凍治療(含內視鏡檢查費用)","note":"1.適應症：(1)氣管、支氣管內病灶之切片（biopsy）。(2)氣管、支氣管內異物之移除。(3)氣管、支氣管狹窄、肉芽之處置。","category":"支氣管鏡/EBUS"},{"code":"28009B","points":"9404","start":"20210701","end":"29101231","name_en":"Thoracoscopy with biopsy","name_zh":"肋膜腔鏡檢查合併切片","note":"含一般材料費及特殊材料費。","category":"支氣管鏡/EBUS"},{"code":"28026B","points":"3684","start":"20210701","end":"29101231","name_en":"Mediastinoscopy with biopsy","name_zh":"縱膈腔鏡檢查合併切片","note":"含一般材料費及特殊材料費。","category":"支氣管鏡/EBUS"},{"code":"29012B","points":"1000","start":"20171001","end":"29101231","name_en":"Thoracocentesis","name_zh":"胸腔穿刺","note":"","category":"侵入性處置"},{"code":"29030B","points":"1000","start":"20040701","end":"29101231","name_en":"Lung aspiration","name_zh":"經皮穿胸肺組織穿刺","note":"","category":"侵入性處置"},{"code":"56010B","points":"2400","start":"20130101","end":"29101231","name_en":"Chest intubation","name_zh":"胸管插管","note":"1.提升兒童加成項目。2.含胸管材料費。","category":"侵入性處置"},{"code":"47021C","points":"126","start":"20231001","end":"29101231","name_en":"chest drainage","name_zh":"胸腔引流一天","note":"提升兒童加成項目。","category":"侵入性處置"},{"code":"47015B","points":"1470","start":"20210701","end":"29101231","name_en":"C.V.P. catheter intubation","name_zh":"中央靜脈導管置入術","note":"提升兒童加成項目。","category":"侵入性處置"},{"code":"47065B","points":"3101","start":"20220301","end":"29101231","name_en":"Therapeutic catheter implantation — PICC","name_zh":"治療性導管植入術—末梢靜脈植入中心導管術（PICC）","note":"1.適應症：(1)癌症化學治療及癌症末期之疼痛治療。(2)下列三項適應症且預期同時治療達二週以上：A.使用全靜脈營養輸液（TPN）。B.免疫不全與使用免疫抑制劑。C.須接受中心靜脈導管置入（CVP）。2.提升兒童加成項目。","category":"侵入性處置"},{"code":"19007C","points":"1500","start":"20210601","end":"29101231","name_en":"Ultrasonic guidance for needle placement(eg, biopsy, aspiration, injection)","name_zh":"超音波導引(為組織切片，抽吸、注射等)","note":"1.實施超音波導引下組織切片、抽吸、注射，除申報本項外，應再加報第二章第一節第二十二項診斷穿刺。2.兒童加成項目。3.屬西醫基層總額部門院所，除山地離島地區外，限由專任醫師開立處方及執行始可申報。","category":"侵入性處置"},{"code":"56015B","points":"660","start":"20130101","end":"29101231","name_en":"Pleural biopsy","name_zh":"肋膜切片術","note":"1.提升兒童加成項目。2.本項102年支付標準調整。","category":"侵入性處置"},{"code":"57016B","points":"565","start":"19961001","end":"29101231","name_en":"TC PCO2 or End tidal CO2 monitor (day)","name_zh":"經皮測二氧化碳分壓器或呼氣末二氧化碳分壓器（日）","note":"手術室及麻醉恢復室使用者，已含括於相關診療費用中，不另支付。","category":"侵入性處置"},{"code":"47094B","points":"9521","start":"20230701","end":"29101231","name_en":"","name_zh":"心跳停止之低溫療法－第一日 (≦二十四小時)","note":"1.適應症：心跳停止病人，進行復甦急救後意識仍不清者(GCS<8)或無遵循口頭醫囑（motor<6）。2.排除條件：恢復自發性循環大於十二小時、腦出血、收縮血壓<90mmHg、大量活動性出血、無法終止的致命性心律不整、在心跳停止前即有失智或長期意識障礙、末期疾病。3.支付規範：總治療療程為三天。不得同時申報：47037B、47038B、47049B、47081B、47082B。特殊材料費另計。","category":"低溫治療/TTM"},{"code":"47095B","points":"1575","start":"20230701","end":"29101231","name_en":"","name_zh":"心跳停止之低溫療法－第二日 (＞二十四小時-≦四十八小時)","note":"適應症及排除條件同47094B。總治療療程三天。不得同時申報：47037B、47038B、47049B、47081B、47082B。","category":"低溫治療/TTM"},{"code":"47096B","points":"1575","start":"20230701","end":"29101231","name_en":"","name_zh":"心跳停止之低溫療法－第三日 (＞四十八小時)","note":"適應症及排除條件同47094B。總治療療程三天。不得同時申報：47037B、47038B、47049B、47081B、47082B。","category":"低溫治療/TTM"},{"code":"47081B","points":"6057","start":"20231001","end":"29101231","name_en":"","name_zh":"難治型顱內高壓之低溫療法－首日","note":"1.適應症：出血性中風、次重度或重度腦創傷(GCS≦12)，傳統治療無效，ICP仍>20mmHg超過十分鐘者。2.禁忌症：休克、腦死、自發性低體溫<32℃、嚴重感染者、呼吸窘迫症候群。3.支付規範：限ICU執行。同次住院限申報首日一次、第二日至第七日至多六次。不得同時申報：47037B、47038B、47039C、47094B-47096B及47097B-47100B。4.限神經科、神經外科及兒科專科醫師執行。","category":"低溫治療/TTM"},{"code":"47082B","points":"2505","start":"20231001","end":"29101231","name_en":"","name_zh":"難治型顱內高壓之低溫療法－第二日至第七日(每日)","note":"同47081B條件，第二日至第七日每日費用。限ICU執行。","category":"低溫治療/TTM"},{"code":"47054C","points":"720","start":"20231001","end":"29101231","name_en":"General hyperbaric oxygen therapy,general","name_zh":"一般高壓氧治療","note":"1.包括氧氣費在內。2.提升兒童加成項目。","category":"高壓氧"},{"code":"59002B","points":"2784","start":"20210701","end":"29101231","name_en":"Decompression sickness and acute gas embolism (including post operative)","name_zh":"潛水病（減壓病）或急性氣栓塞症 50呎 120分","note":"","category":"高壓氧"},{"code":"59003B","points":"6960","start":"20210701","end":"29101231","name_en":"Carbon monoxide toxicity(including cyanide toxicity and smoke inhalation)","name_zh":"一氧化碳中毒（氰化物及氣體中毒）66呎 180分","note":"限急性發作期患者申報。","category":"高壓氧"},{"code":"59004B","points":"3480","start":"20210701","end":"29101231","name_en":"Carbon monoxide toxicity(including cyanide toxicity and smoke inhalation)","name_zh":"一氧化碳中毒（氰化物及氣體中毒）66呎 90分","note":"","category":"高壓氧"},{"code":"59005B","points":"8352","start":"20210701","end":"29101231","name_en":"Clostridial gasgangrene, anaerobic bacteriodes infections","name_zh":"氣壞疽病：氣壞疽及厭氧性細菌感染／壞死性軟組織感染及混合性細菌感染 66呎 180分","note":"限急性發作有生命危險者實施。","category":"高壓氧"},{"code":"59006B","points":"4176","start":"20210701","end":"29101231","name_en":"Necrotizing soft tissue infection and mixed infection","name_zh":"氣壞疽病：氣壞疽及厭氧性細菌感染／壞死性軟組織感染及混合性細菌感染 66呎 90分","note":"限急性發作有生命危險者實施。","category":"高壓氧"},{"code":"59007B","points":"2880","start":"20200101","end":"29101231","name_en":"Osteomyelitis, refractory","name_zh":"慢性復發性骨髓炎 50呎 120分","note":"1.須經外科治療或抗生素治療證實無效患者申報。2.須專案報經保險人同意後實施。","category":"高壓氧"},{"code":"59008B","points":"1800","start":"20200101","end":"29101231","name_en":"Osteomyelitis, refractory","name_zh":"慢性復發性骨髓炎 33呎 90分","note":"須專案報經保險人同意後實施。","category":"高壓氧"},{"code":"59009B","points":"2400","start":"20260101","end":"29101231","name_en":"Crush injury with acute traumatic Ischemia","name_zh":"肢體壓傷伴有創傷性缺血 50呎 120分","note":"1.應符合下列任一條件：必需遲延之病人、無法輸血之病人、無法外科治療之病人、或經緊急適當處置後仍療效不佳病人。2.申報時應檢附肢體處置前後照片備查。","category":"高壓氧"},{"code":"59010B","points":"1800","start":"20260101","end":"29101231","name_en":"Crush injury with acute traumatic Ischemia","name_zh":"肢體壓傷伴有創傷性缺血 33呎 90分","note":"應事前審查。","category":"高壓氧"},{"code":"59011B","points":"3341","start":"20210701","end":"29101231","name_en":"Thermal burns acute","name_zh":"急性燒灼傷、二至三度燒傷，表面積15%–90% 50呎 120分","note":"1.限皮膚移植可能失敗或不能確定效果或以往有皮膚移植失敗病史患者申報。2.須專案報經保險人同意後實施。","category":"高壓氧"},{"code":"59012B","points":"4176","start":"20210701","end":"29101231","name_en":"Thermal burns acute","name_zh":"急性燒灼傷、二至三度燒傷，表面積15%–90% 66呎 90分","note":"需專案報經保險人同意後實施。","category":"高壓氧"},{"code":"59013B","points":"3341","start":"20210701","end":"29101231","name_en":"Osteoradionecrosis / Radiation cystitis, enteritis","name_zh":"放射性組織壞死：放射性骨壞死／放射性膀胱炎、放射性腸炎 50呎 120分","note":"「放射性膀胱炎」、「放射性腸炎」須為合併大量出血，經屢次輸血及其他治療無效者。","category":"高壓氧"},{"code":"59014B","points":"30836","start":"20250901","end":"29101231","name_en":"Decompression sickness and acute gas embolism (including post operative)","name_zh":"潛水病（減壓病）或急性氣栓塞症之高壓氧治療 165呎/319分","note":"1.限治療第二型潛水減壓病（DCSII）及空氣栓塞症（AGE）之急診與住院病人申報，申報時應檢附詳細記載症狀及身體檢查之病歷紀錄。2.急診病人限申報一次。","category":"高壓氧"},{"code":"59015B","points":"14886","start":"20210701","end":"29101231","name_en":"Decompression sickness and acute gas embolism (including post operative)","name_zh":"潛水病（減壓病）或急性氣栓塞症之高壓氧治療 165呎/154分","note":"治療第一型潛水減壓病（DCSI）(輕微型)及空氣栓塞症（AGE）病患申報。","category":"高壓氧"},{"code":"59016B","points":"3236","start":"20210701","end":"29101231","name_en":"Decompression sickness and acute gas embolism (including post operative)","name_zh":"潛水病（減壓病）或急性氣栓塞症之高壓氧治療 60呎/135分","note":"DCS及AGE之殘餘症狀治療。","category":"高壓氧"},{"code":"47028C","points":"554","start":"20221201","end":"29101231","name_en":"Electrical defibrillation or cardioversion","name_zh":"去顫術（急救一次）","note":"1.不論急救過程中施行電擊次數，每一急救過程限申報一次。2.提升兒童加成項目。","category":"CPR/急救"},{"code":"47104B","points":"5114","start":"20220301","end":"29101231","name_en":"Prone positioning ventilation, each procedure","name_zh":"俯臥通氣治療 — 每療程","note":"1.每療程係指仰臥→俯臥→仰臥。2.適應症：成人（十九歲以上）入住ICU且插管使用呼吸器之ARDS病人（J80），同時符合：PaO₂/FiO₂ ratio≦150、七日內急性發作、無心因性肺水腫證據、CXR顯示兩側肺野浸潤。兒童（未滿十九歲）：PaO₂/FiO₂ ratio≦150、OI>16、或OSI>12.3。3.禁忌症：心胸及腹腔主要手術、脊椎與骨盆不穩定、懷孕第二及第三期、頭部外傷、腦壓或眼壓過高、正在發作之癲癇患者。4.不得同時申報47045C。","category":"俯臥通氣"},{"code":"47090B","points":"247","start":"20220301","end":"29101231","name_en":"","name_zh":"高頻胸壁振盪模式呼吸道清潔(每次至少三十分鐘)","note":"1.限住院病患無法有效清除痰液使用，每日限申報最多四次，每一療程最多十天。2.不可同時申報47045C體外引流、57010B呼吸運動（次）、57012B復原運動。3.提升兒童加成項目。","category":"呼吸道清潔"},{"code":"57029C","points":"3500","start":"20240401","end":"29101231","name_en":"","name_zh":"震動式高頻呼吸器治療","note":"不得同時申報57032B。","category":"呼吸道清潔"}];
+
+// State
+let currentCat = 'all';
+let searchQuery = '';
+let sortMode = 'default';
+
+// Format date
+function fmtDate(d) {
+  if (!d || d.startsWith('2910')) return '現行有效';
+  return d.slice(0,4) + '/' + d.slice(4,6) + '/' + d.slice(6,8);
+}
+
+// CSS class for category
+function catClass(cat) {
+  return cat.replace(/[\/\s]/g, '');
+}
+
+// Build sidebar
+function buildSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = '';
+  CATS.forEach(cat => {
+    const count = cat.id === 'all'
+      ? RAW_DATA.length
+      : RAW_DATA.filter(d => d.category === cat.id).length;
+    const div = document.createElement('div');
+    div.className = 'sidebar-item' + (cat.id === currentCat ? ' active' : '');
+    div.dataset.cat = cat.id;
+    div.innerHTML = `<span class="cat-icon">${cat.icon}</span><span class="cat-label">${cat.label}</span><span class="cat-count">${count}</span>`;
+    div.addEventListener('click', () => { currentCat = cat.id; searchQuery = ''; document.getElementById('searchInput').value = ''; render(); });
+    sidebar.appendChild(div);
+    if (cat.id === 'all') {
+      const div2 = document.createElement('div'); div2.className = 'sidebar-divider'; sidebar.appendChild(div2);
+      const lbl = document.createElement('div'); lbl.className = 'sidebar-section-label'; lbl.textContent = '分類'; sidebar.appendChild(lbl);
+    }
+  });
+}
+
+// Highlight search term
+function highlight(text, query) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(escaped, 'gi'), m => `<span class="highlight">${m}</span>`);
+}
+
+// Filter & sort data
+function getFilteredData() {
+  let data = currentCat === 'all' ? RAW_DATA : RAW_DATA.filter(d => d.category === currentCat);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    data = RAW_DATA.filter(d =>
+      d.code.toLowerCase().includes(q) ||
+      d.name_zh.toLowerCase().includes(q) ||
+      d.name_en.toLowerCase().includes(q) ||
+      d.note.toLowerCase().includes(q)
+    );
+  }
+  if (sortMode === 'high') data = [...data].sort((a,b) => parseInt(b.points) - parseInt(a.points));
+  else if (sortMode === 'low') data = [...data].sort((a,b) => parseInt(a.points) - parseInt(b.points));
+  return data;
+}
+
+// Render cards
+function render() {
+  buildSidebar();
+  const data = getFilteredData();
+  const q = searchQuery;
+
+  // Title
+  const catObj = CATS.find(c => c.id === currentCat) || CATS[0];
+  const title = document.getElementById('contentTitle');
+  title.innerHTML = `${catObj.icon} ${searchQuery ? '搜尋結果' : catObj.label} <span class="cat-badge">${data.length} 項</span>`;
+
+  // Cards
+  const grid = document.getElementById('cardsGrid');
+  const searchCount = document.getElementById('searchCount');
+  searchCount.textContent = q ? `找到 ${data.length} 筆` : '';
+
+  if (data.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>沒有符合「${q}」的項目</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  data.forEach(item => {
+    const card = document.createElement('div');
+    const cc = catClass(item.category);
+    card.className = `card cat-${cc}`;
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-code">${highlight(item.code, q)}</span>
+        <div class="card-main">
+          <div class="card-name-zh">${highlight(item.name_zh, q)}</div>
+          ${item.name_en ? `<div class="card-name-en">${highlight(item.name_en, q)}</div>` : ''}
+          <div class="card-meta">
+            <span class="points-badge">${parseInt(item.points).toLocaleString()} 點</span>
+            <span class="date-badge">生效 ${fmtDate(item.start)}</span>
+            ${item.note ? `<span class="expand-icon">▼</span>` : ''}
+          </div>
+        </div>
+        <button class="copy-btn" data-code="${item.code}">複製代碼</button>
+      </div>
+      ${item.note ? `<div class="card-note">${highlight(item.note, q) || '<span class="no-note">—</span>'}</div>` : ''}
+    `;
+
+    // Toggle note
+    card.querySelector('.card-header').addEventListener('click', (e) => {
+      if (e.target.classList.contains('copy-btn')) return;
+      if (item.note) card.classList.toggle('expanded');
+    });
+
+    // Copy button
+    const copyBtn = card.querySelector('.copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(item.code).catch(() => {});
+        copyBtn.textContent = '✓ 已複製';
+        copyBtn.classList.add('copied');
+        setTimeout(() => { copyBtn.textContent = '複製代碼'; copyBtn.classList.remove('copied'); }, 1500);
+      });
+    }
+    grid.appendChild(card);
+  });
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim();
+  if (searchQuery) currentCat = 'all';
+  render();
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  searchQuery = ''; document.getElementById('searchInput').value = ''; render();
+});
+
+// Sort
+document.getElementById('sortDefault').addEventListener('click', () => { sortMode = 'default'; updateSort(); render(); });
+document.getElementById('sortHigh').addEventListener('click', () => { sortMode = 'high'; updateSort(); render(); });
+document.getElementById('sortLow').addEventListener('click', () => { sortMode = 'low'; updateSort(); render(); });
+function updateSort() {
+  ['sortDefault','sortHigh','sortLow'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = { default: 'sortDefault', high: 'sortHigh', low: 'sortLow' };
+  document.getElementById(map[sortMode]).classList.add('active');
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
