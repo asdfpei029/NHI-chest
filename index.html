@@ -79,6 +79,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f4f6fa;color:#1a2340;disp
 .cc-cpr .ccode{background:#fee2e2;color:#dc2626}
 .cc-prone .ccode{background:#cffafe;color:#0891b2}
 .cc-aw .ccode{background:#d1fae5;color:#059669}
+.cc-gene .ccode{background:#f3e8ff;color:#7c3aed}
+.cc-qm .ccode{background:#fef9c3;color:#854d0e}
 
 /* Empty */
 .empty{text-align:center;padding:60px 20px;color:#5a6a8a}
@@ -127,7 +129,7 @@ mark{background:#fef08a;border-radius:2px;padding:0}
 <div class="ftr">
   <span>📋 資料來源：</span>
   <a href="https://info.nhi.gov.tw/IODE0000/IODE0000S09?id=1381" target="_blank">全民健康保險醫療服務給付項目及支付標準（衛福部健保署）</a>
-  <span>｜ 檔案：A21030000I-D20021-001 ｜ v1.0／2025.05 ｜ 衛福部臺北醫院胸腔內科</span>
+  <span>｜ 檔案：A21030000I-D20021-001 ｜ v1.0／2026.05 ｜ 衛福部臺北醫院胸腔內科</span>
 </div>
 
 <script>
@@ -145,6 +147,8 @@ const CATS=[
   {id:'CPR/急救',label:'CPR/急救',ico:'🫀',cc:'cpr'},
   {id:'俯臥通氣',label:'俯臥通氣',ico:'🔄',cc:'prone'},
   {id:'呼吸道清潔',label:'呼吸道清潔',ico:'💨',cc:'aw'},
+  {id:'肺癌基因檢測',label:'肺癌基因檢測',ico:'🧬',cc:'gene'},
+  {id:'肺癌品質管理',label:'肺癌品質管理',ico:'📋',cc:'qm'},
 ];
 
 const DB=[
@@ -244,7 +248,29 @@ const DB=[
 {"code":"59016B","pts":3236,"start":"20210701","en":"DCS / AGE residual symptoms — 60ft/135min","zh":"潛水病（減壓病）或急性氣栓塞症 — 殘餘症狀治療 60呎/135分","note":"DCS及AGE之殘餘症狀治療。","cat":"高壓氧"},
 {"code":"47028C","pts":554,"start":"20221201","en":"Electrical defibrillation or cardioversion","zh":"去顫術（急救一次）","note":"1.不論急救過程中施行電擊次數，每一急救過程限申報一次。2.提升兒童加成項目。","cat":"CPR/急救"},
 {"code":"47104B","pts":5114,"start":"20220301","en":"Prone positioning ventilation (each procedure: supine→prone→supine)","zh":"俯臥通氣治療 — 每療程（仰臥→俯臥→仰臥）","note":"1.每療程係指仰臥→俯臥→仰臥。2.適應症：(1)成人（十九歲以上）：入住加護病房且插管使用呼吸器之急性呼吸窘迫症候群病人（J80），同時符合下列各項條件：a.氧合指數（PaO₂/FiO₂ ratio）≦150。b.七日內急性發作。c.沒有心因性肺水腫的證據。d.CXR 顯示兩側肺野浸潤。(2)兒童（未滿十九歲）：入住加護病房且插管使用呼吸器，同時符合下列情形之一者：a.氧合指數（PaO₂/FiO₂ ratio）≦150。b.OI>16。c.OSI>12.3。3.禁忌症：心胸及腹腔主要手術、脊椎與骨盆不穩定、懷孕第二及第三期、頭部外傷、腦壓或眼壓過高之病人、正在發作之癲癇患者。4.限內科、外科、麻醉科、兒科、急診醫學科、神經科、神經外科專科醫師執行。5.不得同時申報47045C。備註：OI=(FiO₂×mean airway pressure×100)/PaO₂OSI=(FiO₂×mean airway pressure×100)/SpO₂","cat":"俯臥通氣"},
+
+{"code":"28033C","pts":1800,"start":"20031201","en":"Diagnostic bronchoalveolar lavage","zh":"診斷性肺泡灌洗術（Diagnostic BAL）","note":"","cat":"支氣管鏡/EBUS"},
+{"code":"16010C","pts":170,"start":"20031201","en":"Analysis of total cell count and differentiation in BAL fluid","zh":"分析肺泡灌洗液之細胞總數及分類（BAL cell differential）","note":"","cat":"支氣管鏡/EBUS"}
+,
 {"code":"47090B","pts":247,"start":"20220301","en":"High-frequency chest wall oscillation (HFCWO, ≥30 min/session)","zh":"高頻胸壁振盪模式呼吸道清潔（HFCWO，每次至少30分鐘）","note":"1.限住院病患無法有效清除痰液使用，每日限申報最多四次，每一療程最多十天。2.不可同時申報47045C體外引流、57010B呼吸運動（次）、57012B復原運動。3.提升兒童加成項目。","cat":"呼吸道清潔"},
+{"code":"30101B","pts":8252,"start":"20241201","en":"EGFR mutation in vitro diagnostics testing (IVD)","zh":"肺癌 EGFR 突變體外診斷醫療器材檢測（IVD）","note":"1.適應症：(1)限復發或轉移性(第Ⅳ期)之非小細胞且非鱗狀上皮肺癌，於使用EGFR標靶藥物前得申請檢測。(2)第ⅢB期及第ⅢC期，經肺癌多專科團隊討論，無法以外科手術完全切除、且不適合放射化學治療，於使用EGFR標靶藥物前得申請檢測。2.支付規範：(1)本檢測應包含EGFR(外顯子[exon]18、19、20、21)之突變分析。(2)限使用已確診之腫瘤病理組織或細胞檢體做檢測，並於檢測報告上註明診斷與腫瘤細胞百分比。(3)限具肺癌EGFR基因檢測項目通過CAP、TAF或ILAC相互承認協議組織認證之實驗室操作。(4)每人終生限給付一次。(5)申報本項尚須上傳檢測試劑代碼，未上傳者不予支付。","cat":"肺癌基因檢測"},
+{"code":"30102B","pts":6755,"start":"20241201","en":"EGFR mutation Laboratory Developed Test (LDTs)","zh":"肺癌 EGFR 突變實驗室開發檢測（LDTs）","note":"1.適應症：同30101B（第Ⅳ期或第ⅢB/ⅢC期NSCLC非鱗狀上皮，使用EGFR標靶藥物前）。2.支付規範：(1)本檢測應包含EGFR(exon 18、19、20、21)之突變分析。(2)限使用已確診之腫瘤病理組織或細胞檢體。(3)限主管機關核定之實驗室開發檢測施行計畫表列醫療機構申報。(4)執行機構應報經保險人核定。(5)每人終生限給付一次。","cat":"肺癌基因檢測"},
+{"code":"30103B","pts":5984,"start":"20200401","en":"PD-L1 immunohistochemistry (IHC)","zh":"PD-L1 免疫組織化學染色（IHC）","note":"1.適應症：符合健保藥物給付規定第9節抗癌瘤藥物9.69.免疫檢查點PD-1/PD-L1抑制劑之使用條件，且申請時需檢附PD-L1表現量檢測報告之疾病。2.支付規範：(1)限使用食品藥物管理署核准之第三等級醫療器材檢測試劑(IVD)操作，並於報告上註明方法學與檢測平台。(2)應檢附解剖病理或口腔病理專科醫師簽名與加註專科醫師證書字號之病理報告。(3)限符合適應症規範者用藥前之伴隨式檢測，每人終生限給付一次。(4)申報本項尚須上傳檢測試劑代碼，未上傳者不予支付。","cat":"肺癌基因檢測"},
+{"code":"30105B","pts":7294,"start":"20220201","en":"ALK in vitro diagnostics testing - IHC method","zh":"ALK（間變性淋巴瘤激酶）突變體外診斷醫療器材檢測（IVD-IHC法）","note":"1.適應症：(1)限復發或轉移性(第Ⅳ期)之非小細胞且非鱗狀上皮肺癌，於EGFR基因檢測為陰性時，得申請檢測。(2)第ⅢB期及第ⅢC期，經肺癌多專科團隊討論，無法以外科手術完全切除、且不適合放射化學治療，於EGFR基因檢測為陰性時，得申請檢測。2.支付規範：(1)限使用食品藥物管理署核准之第三等級醫療器材檢測試劑操作，並於報告上註明方法學與檢測平台。(2)限解剖病理專科醫師簽發報告，並加註專科醫師證書字號。(3)限符合適應症規範者用藥前之伴隨式檢測，每人終生限給付一次。","cat":"肺癌基因檢測"},
+{"code":"30107B","pts":3006,"start":"20241201","en":"BRAF mutation testing (LDTs)","zh":"BRAF 基因突變分析實驗室開發檢測（LDTs）","note":"適應症須符合下列任一條件：(1)黑色素瘤使用Vemurafenib、Dabrafenib/Trametinib者。(2)轉移性直腸結腸癌使用Cetuximab/Panitumumab，且KRAS及NRAS為wild type者。(3)甲狀腺癌（不包含髓質癌）：乳突性及濾泡性甲狀腺癌經碘131及抑制血管新生標靶藥物治療無效者；無分化甲狀腺癌經多專科團隊評估者。(4)非小細胞肺癌使用Dabrafenib/Trametinib者。限主管機關核定之LDTs計畫表列醫療機構申報，每人終生限給付一次。","cat":"肺癌基因檢測"},
+{"code":"30301B","pts":10000,"start":"20241201","en":"Solid tumor NGS - BRCA1/2 testing (germline or somatic)","zh":"實體腫瘤次世代基因定序（NGS）— BRCA1/2 基因檢測","note":"1.適應症：如附表2.2.1（包含乳癌、卵巢癌、胰臟癌、攝護腺癌等BRCA適應症）。2.支付規範：(1)限區域級以上醫院或通過癌症診療品質認證醫院。(2)須院內設立或跨院聯合組成分子腫瘤委員會(MTB)。(3)限主管機關核定之LDTs計畫表列醫療機構（檢測項目類別為「抗癌瘤藥物之伴隨檢測」或「癌症篩檢、診斷、治療及預後之基因檢測」）。(4)Germline BRCA1/2基因檢測可使用血液檢體，其他須使用已確診之腫瘤病理組織。","cat":"肺癌基因檢測"},
+{"code":"30302B","pts":20000,"start":"20241201","en":"Solid tumor NGS - Small panel (≦100 genes)","zh":"實體腫瘤次世代基因定序（NGS）— 小套組（≦100個基因）","note":"1.適應症：如附表2.2.1（涵蓋肺癌、大腸癌、乳癌、卵巢癌等多種實體腫瘤）。2.支付規範：(1)限區域級以上醫院或通過癌症診療品質認證醫院。(2)須設立分子腫瘤委員會(MTB)。(3)限主管機關核定之LDTs計畫表列醫療機構。(4)限使用已確診之腫瘤病理組織，且檢測項目須包含與適應症相符之biomarker。每人同一腫瘤（原發或復發）限給付一次，不得重複申報30301B、30302B、30303B。","cat":"肺癌基因檢測"},
+{"code":"30303B","pts":30000,"start":"20241201","en":"Solid tumor NGS - Large panel (>100 genes)","zh":"實體腫瘤次世代基因定序（NGS）— 大套組（＞100個基因）","note":"1.適應症：如附表2.2.1（涵蓋肺癌、大腸癌、乳癌、卵巢癌等多種實體腫瘤）。2.支付規範：(1)限區域級以上醫院或通過癌症診療品質認證醫院。(2)須設立分子腫瘤委員會(MTB)。(3)限主管機關核定之LDTs計畫表列醫療機構。(4)限使用已確診之腫瘤病理組織，且檢測項目須包含與適應症相符之biomarker。每人同一腫瘤（原發或復發）限給付一次，不得重複申報30301B、30302B、30303B。","cat":"肺癌基因檢測"},
+{"code":"25012B","pts":1354,"start":"20200901","en":"Immunohistochemical stains, each antibody (IHC)","zh":"免疫組織化學染色（IHC）— 每一抗體（ALK、ROS1、MET、HER2、TTF-1 等）","note":"1.每例（同次門診或同次住院）以申報五種抗體為限。2.若屬下列特殊診斷種類，則申報以十種抗體為限：(1)淋巴瘤(lymphoma)。(2)雙側乳癌病理檢體(bilateral breast cancer specimens)。(3)不明原發部位惡性腫瘤(cancer of unknown primary)。(4)惡性及來源行為不明性骨及軟組織腫瘤。3.肺癌常用IHC抗體：ALK D5F3、ROS1、MET、HER2（4B5）、TTF-1、Napsin A、PD-L1（SP142/22C3/28-8）。","cat":"肺癌基因檢測"},
+{"code":"12188C","pts":1200,"start":"20040701","en":"Chromosomal translocation fusion gene analysis by RT-PCR","zh":"染色體轉位融合基因之反轉錄聚合酶連鎖反應分析（RT-PCR）— ROS1、RET、ALK fusion 等","note":"常用於偵測染色體轉位所產生之融合基因，包含肺癌相關之 ALK（EML4-ALK）、ROS1、RET 融合基因，以及其他血液惡性腫瘤相關之融合基因（如 BCR-ABL、PML-RARA）。","cat":"肺癌基因檢測"},
+{"code":"12182C","pts":1000,"start":"20040701","en":"DNA qualitative amplification test (PCR)","zh":"去氧核糖核酸類定性擴增試驗（DNA PCR）— EGFR、KRAS、BRAF 等點突變定性","note":"適用於 EGFR、KRAS、BRAF 等基因定性 PCR 突變分析，或液態切片（ctDNA）中基因突變之定性偵測。","cat":"肺癌基因檢測"},
+{"code":"12184C","pts":2000,"start":"20250501","en":"DNA quantitative amplification test (qPCR/ddPCR)","zh":"去氧核糖核酸類定量擴增試驗（qPCR/ddPCR）— ctDNA 液態切片定量","note":"適用於 ctDNA 液態切片基因突變之定量分析（如 ddPCR 偵測 EGFR T790M、C797S），或組織 MET exon 14 skipping、KRAS 定量分析。不得同時申報14085C、14086C。","cat":"肺癌基因檢測"},
+{"code":"47079B","pts":2800,"start":"20230701","en":"Cancer patient treatment planning and Consultation","zh":"癌症治療計畫諮詢規劃費","note":"1.本項包含病人病情及體能狀況、最適合治療方式、住院及門診追蹤之配合度、預後因子、心理調適、經濟、工作、信仰、家族等之諮詢、評估、計畫、治療建議、情緒處理及引導等。2.限病理診斷確定為癌症或復發之病人依治療計畫於治療完成時申報一次。惟肝癌病人無法施行病理組織檢查，得以影像合併腫瘤標記數值確定者比照申報。原位癌病人經多專科醫療團隊討論及安排後續治療追蹤，於治療完成時申報一次，且申報時應於病歷上詳載相關會診紀錄及治療計畫等備查。3.提升兒童加成項目。","cat":"肺癌品質管理"}
+,{"code":"P7707B","pts":800,"start":"20230601","en":"Lung cancer follow-up management fee - Category 4A/4B/4X","zh":"肺癌追蹤管理費 — Category 4A、4B、4X（LDCT 篩檢計畫）","note":"一、醫事服務機構須對個案提供符合本計畫服務內容後，始得申報。二、每一個案須有「追蹤管理費」及「診斷品質管理費」二項申報編號者，方得分別支付。三、每一個案同一癌別週期，不得重複申報本標準。四、執行期限內完成檢查追蹤或確診檢查報告上傳者。五、由原篩檢醫事服務機構申報。","cat":"肺癌品質管理"},
+{"code":"P7708B","pts":400,"start":"20230601","en":"Lung cancer follow-up management fee - Category 3","zh":"肺癌追蹤管理費 — Category 3（LDCT 篩檢計畫）","note":"一、醫事服務機構須對個案提供符合本計畫服務內容後，始得申報。二、每一個案須有「追蹤管理費」及「診斷品質管理費」二項申報編號者，方得分別支付。三、每一個案同一癌別週期，不得重複申報本標準。四、執行期限內完成檢查追蹤或確診檢查報告上傳者。五、由原篩檢醫事服務機構申報。","cat":"肺癌品質管理"},
+{"code":"P7714B","pts":1700,"start":"20230601","en":"Lung cancer diagnosis quality management fee - confirmed diagnosis","zh":"肺癌診斷品質管理費 — 確診或檢查追蹤後確診","note":"一、醫事服務機構須對個案提供符合本計畫服務內容後，始得申報。二、每一個案須有「追蹤管理費」及「診斷品質管理費」二項申報編號者，方得分別支付。三、每一個案同一癌別週期，不得重複申報。四、執行期限內完成檢查追蹤或確診檢查報告上傳者。五、由接受原篩檢醫事服務機構轉診之確診醫事服務機構申報。","cat":"肺癌品質管理"},
+{"code":"P7715B","pts":1200,"start":"20230601","en":"Lung cancer diagnosis quality management fee - first follow-up completed","zh":"肺癌診斷品質管理費 — 完成第1次檢查追蹤予以結案","note":"一、醫事服務機構須對個案提供符合本計畫服務內容後，始得申報。二、每一個案須有「追蹤管理費」及「診斷品質管理費」二項申報編號者，方得分別支付。三、每一個案同一癌別週期，不得重複申報。四、執行期限內完成檢查追蹤或確診檢查報告上傳者。五、由接受原篩檢醫事服務機構轉診之確診醫事服務機構申報。","cat":"肺癌品質管理"}
+,
 {"code":"57029C","pts":3500,"start":"20240401","en":"High-frequency percussive ventilation (HFPV) therapy","zh":"震動式高頻呼吸器治療（HFPV）","note":"不得同時申報57032B。","cat":"呼吸道清潔"}
 ];
 
